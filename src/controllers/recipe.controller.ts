@@ -36,6 +36,11 @@ export const getRecipes = asyncHandler(async (req: Request, res: Response) => {
   }));
 });
 
+export const getMyRecipes = asyncHandler(async (req: Request, res: Response) => {
+  const recipes = await Recipe.find({ authorId: req.user._id }).sort({ createdAt: -1 });
+  res.status(200).json(new ApiResponse(200, recipes, "Fetched user's recipes successfully"));
+});
+
 export const getRecipeById = asyncHandler(async (req: Request, res: Response) => {
   const recipe = await Recipe.findById(req.params.id).populate('authorId', 'name image');
   if (!recipe) throw new ApiError(404, 'Recipe not found');

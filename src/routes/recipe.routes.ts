@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getRecipes, getRecipeById, createRecipe, deleteRecipe, recordInteraction } from '../controllers/recipe.controller';
+import { getRecipes, getRecipeById, getMyRecipes, createRecipe, deleteRecipe, recordInteraction } from '../controllers/recipe.controller';
 import { addReview } from '../controllers/review.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -30,6 +30,7 @@ const interactionSchema = Joi.object({
 });
 
 router.get('/', getRecipes);
+router.get('/mine', requireAuth, getMyRecipes);
 router.get('/:id', getRecipeById);
 router.post('/', requireAuth, validate(recipeSchema), createRecipe);
 router.delete('/:id', requireAuth, deleteRecipe);
