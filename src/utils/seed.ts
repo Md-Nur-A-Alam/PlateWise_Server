@@ -26,30 +26,38 @@ const seedDatabase = async () => {
 
     console.log('Cleared existing data');
 
-    // Create Demo User via Mongoose directly
-    // Better Auth normally creates a User and an Account
-    const demoUser = await User.create({
-      name: 'Demo User',
-      email: 'demo@platewise.com',
-      emailVerified: true,
-      dietaryPreferences: ['None'],
-      allergies: [],
-    });
+    // Call Better Auth running on Next.js to register the demo user properly
+    try {
+      const demoRes = await fetch('http://localhost:3000/api/auth/sign-up/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:3000' },
+        body: JSON.stringify({
+          email: 'demo@platewise.com',
+          password: 'DemoPassword123!',
+          name: 'Demo User'
+        })
+      });
+      if (!demoRes.ok) {
+        console.error('Failed to create demo user via API:', await demoRes.text());
+        throw new Error('Demo user creation failed');
+      }
+      console.log('Demo user created via Better Auth HTTP API');
+    } catch (e) {
+      console.error('Could not reach Next.js server to create demo user. Is it running on port 3000?', e);
+      throw e;
+    }
 
-    const passwordHash = await bcrypt.hash('DemoPassword123!', 10);
+    // We also need to get the Mongoose ObjectID for the recipes
+    const demoUser = await User.findOne({ email: 'demo@platewise.com' });
+    if (demoUser) {
+        demoUser.dietaryPreferences = ['None'];
+        demoUser.allergies = [];
+        await demoUser.save();
+    } else {
+        throw new Error('Demo user not found in DB after API creation');
+    }
+
     
-    // Create Better Auth account record
-    await mongoose.connection.collection('account').insertOne({
-      userId: demoUser._id.toString(),
-      accountId: demoUser.email,
-      providerId: 'credential',
-      password: passwordHash,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    console.log('Demo user created');
-
     // 15 Recipes
     const recipes = [
       {
@@ -62,7 +70,7 @@ const seedDatabase = async () => {
         dietType: ['Vegetarian'],
         cookTimeMinutes: 20,
         difficulty: 'Medium',
-        authorId: demoUser._id,
+        authorId: demoUser?._id,
         avgRating: 4.8
       },
       {
