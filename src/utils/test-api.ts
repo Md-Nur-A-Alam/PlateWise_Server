@@ -11,20 +11,21 @@ const runTests = async () => {
       console.log('Server started for testing...');
       
       // Test 1: GET /api/recipes
-      const res1 = await fetch('http://localhost:5000/api/recipes');
+      const baseUrl = process.env.SERVER_URL || 'http://localhost:5000';
+      const res1 = await fetch(`${baseUrl}/api/recipes`);
       const data1 = await res1.json();
       console.log('GET /api/recipes status:', res1.status, '| Total recipes:', data1.data?.recipes?.length);
 
       // Test 2: GET /api/recipes/:id
       if (data1.data?.recipes?.length > 0) {
         const firstId = data1.data.recipes[0]._id;
-        const res2 = await fetch(`http://localhost:5000/api/recipes/${firstId}`);
+        const res2 = await fetch(`${baseUrl}/api/recipes/${firstId}`);
         const data2 = await res2.json();
         console.log(`GET /api/recipes/${firstId} status:`, res2.status, '| Title:', data2.data?.recipe?.title);
       }
 
       // Test 3: POST /api/recipes without token (Protected route)
-      const res3 = await fetch('http://localhost:5000/api/recipes', {
+      const res3 = await fetch(`${baseUrl}/api/recipes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'Test' })

@@ -28,9 +28,10 @@ const seedDatabase = async () => {
 
     // Call Better Auth running on Next.js to register the demo user properly
     try {
-      const demoRes = await fetch('http://localhost:3000/api/auth/sign-up/email', {
+      const clientUrl = process.env.CLIENT_URL || '';
+      const demoRes = await fetch(`${clientUrl}/api/auth/sign-up/email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Origin': 'http://localhost:3000' },
+        headers: { 'Content-Type': 'application/json', 'Origin': clientUrl },
         body: JSON.stringify({
           email: 'demo@platewise.com',
           password: 'DemoPassword123!',
