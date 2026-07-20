@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { ApiError } from '../utils/apiResponse';
 import { User } from '../models/User';
 
@@ -11,20 +11,47 @@ declare global {
   }
 }
 
-export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
+import { asyncHandler } from '../utils/asyncHandler';
+
+let JWKS: ReturnType<typeof createRemoteJWKSet>;
+
+export const requireAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   try {
+    let token = '';
+
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.headers.cookie) {
+      const cookies = req.headers.cookie.split(';').reduce((acc: any, c) => {
+        const [key, val] = c.trim().split('=').map(decodeURIComponent);
+        acc[key] = val;
+        return acc;
+      }, {});
+      
+      token = cookies['better-auth.session_token'] || '';
+    }
+
+    if (!token) {
       throw new ApiError(401, 'Unauthorized request: No token provided');
     }
 
-    const token = authHeader.split(' ')[1];
-    if (!process.env.BETTER_AUTH_SECRET) {
-      throw new Error('BETTER_AUTH_SECRET is not defined in environment variables');
+    if (!process.env.CLIENT_URL) {
+      throw new Error('CLIENT_URL is not defined in environment variables');
     }
 
-    const decoded = jwt.verify(token, process.env.BETTER_AUTH_SECRET) as any;
-    const user = await User.findById(decoded.id || decoded.sub).select('-passwordHash');
+    // Initialize JWKS if it hasn't been already
+    if (!JWKS) {
+      // BETTER_AUTH_URL is typically needed, we fall back to CLIENT_URL for the JWKS endpoint
+      const authUrl = process.env.BETTER_AUTH_URL || process.env.CLIENT_URL;
+      JWKS = createRemoteJWKSet(new URL(`${authUrl}/api/auth/jwks`));
+    }
+
+    const { payload } = await jwtVerify(token, JWKS);
+    
+    // JWT from better-auth usually has 'id' or 'sub' as the user ID
+    const userId = payload.id || payload.sub;
+    const user = await User.findById(userId).select('-passwordHash');
     
     if (!user) {
       throw new ApiError(401, 'Invalid Token: User not found');
@@ -32,7 +59,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch (error: any) {
+    console.error("JWT Verification error:", error);
     next(new ApiError(401, 'Invalid or expired token'));
   }
-};
+});

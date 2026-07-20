@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import recipeRoutes from './routes/recipe.routes';
 import miscRoutes from './routes/misc.routes';
 import uploadRoutes from './routes/upload.routes';
+import aiRoutes from './routes/ai.routes';
 import { ApiError } from './utils/apiResponse';
 import { Request, Response, NextFunction } from 'express';
 
@@ -17,6 +18,7 @@ app.use(morgan('dev'));
 
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api', miscRoutes); // interactions
 
 // Global error handler

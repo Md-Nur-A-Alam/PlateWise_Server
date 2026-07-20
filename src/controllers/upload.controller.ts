@@ -13,9 +13,8 @@ export const uploadImage = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const formData = new FormData();
-  // ImgBB API expects a base64 encoded string or multipart form data.
-  // Using native fetch, we can convert the buffer to a Blob and append it.
-  const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+  // Using Blob since Node's FormData doesn't support Buffer directly
+  const blob = new Blob([new Uint8Array(req.file.buffer)], { type: req.file.mimetype });
   formData.append('image', blob, req.file.originalname);
 
   const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {

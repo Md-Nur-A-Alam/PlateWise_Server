@@ -1,0 +1,1 @@
+import('./src/app.ts').then(m = const app = m.default; const request = require('supertest'); request(app).post('/api/recipes').send({}).expect(401).end((err, res) = console.log(res.status, res.text); process.exit(0); }); });  

@@ -3,7 +3,7 @@ import { recordInteraction } from '../controllers/recipe.controller';
 import { getStats, subscribeNewsletter, getRecentReviews } from '../controllers/misc.controller';
 import { requireAuth } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
-import Joi from 'joi';
+import * as Joi from 'joi';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import Joi from 'joi';
+import * as Joi from 'joi';
 import { ApiError } from '../utils/apiResponse';
 
 export const validate = (schema: Joi.ObjectSchema) => (req: Request, res: Response, next: NextFunction) => {
